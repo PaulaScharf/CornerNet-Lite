@@ -34,8 +34,8 @@ def backward(input, grad_output):
     height = input.size(2)
     width = input.size(3)
 
-    max_val = torch.zeros((batch, channel, width), torch.from_numpy(input).float().to(device))
-    max_ind = torch.zeros((batch, channel, width), torch.from_numpy(input).long().to(device))
+    max_val = torch.zeros((batch, channel, height), dtype=torch.float, device=device)
+    max_ind = torch.zeros((batch, channel, height), dtype=torch.long, device=device)
 
     input_temp = input.select(2, 0)
     max_val.copy_(input_temp)
@@ -47,13 +47,13 @@ def backward(input, grad_output):
     output_temp.copy_(grad_output_temp)
 
     un_max_ind = max_ind.unsqueeze(2)
-    gt_mask = torch.zeros((batch, channel, width), torch.from_numpy(input).float().to(device))
-    max_temp = torch.zeros((batch, channel, width), torch.from_numpy(input).long().to(device))
-    for ind in range(height): # for (int32_t ind = 0; ind < height - 1; ++ind) {
+    gt_mask = torch.zeros((batch, channel, height), dtype=torch.bool, device=device)
+    max_temp = torch.zeros((batch, channel, height), dtype=torch.float, device=device)
+    for ind in range(height-1): # for (int32_t ind = 0; ind < height - 1; ++ind) {
         input_temp = input.select(2, ind + 1)
-        np.gt_out(gt_mask, input_temp, max_val) # does this exist in numpy
+        torch.gt(input_temp, max_val, out=gt_mask)
 
-        np.masked_select_out(max_temp, input_temp, gt_mask) # does this exist in numpy
+        torch.masked_select(input_temp, gt_mask, out=max_temp)
         max_val.masked_scatter_(gt_mask, max_temp)
         max_ind.masked_fill_(gt_mask, ind + 1)
 
