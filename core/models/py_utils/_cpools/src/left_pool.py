@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import tensorflow as tf
 
 def forward(input):    # Initialize output
     output = torch.zeros_like(input)
