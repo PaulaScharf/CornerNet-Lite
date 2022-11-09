@@ -5,6 +5,9 @@ Code for reproducing results in the following paper:
 Hei Law, Yun Teng, Olga Russakovsky, Jia Deng  
 *arXiv:1904.08900* 
 
+### Paulas Changes
+- pooling layer in python
+
 ## Getting Started
 ### Software Requirement
 - Python 3.7
