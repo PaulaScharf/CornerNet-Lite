@@ -60,5 +60,5 @@ def backward(input, grad_output):
         grad_output_temp = grad_output.select(2, ind + 1).unsqueeze(2)
         output.scatter_add_(2, un_max_ind, grad_output_temp)
 
-    return output
+    return [output]
 
