@@ -51,15 +51,25 @@ def backward(input, grad_output):
     gt_mask = torch.zeros((batch, channel, height), dtype=torch.bool, device=device)
     max_temp = torch.zeros((batch, channel, height), dtype=torch.float, device=device)
     for ind in range(width-1): # for (int32_t ind = 0; ind < width - 1; ++ind)
+        print(ind)
+        print('a')
         input_temp = input.select(3, ind + 1)
-        torch.gt(input_temp, max_val, out=gt_mask)
+        print('a')
+        gt_mask=torch.gt(input_temp, max_val)
 
-        torch.masked_select(input_temp, gt_mask, out=max_temp)
+        max_temp = torch.masked_select(input_temp, gt_mask)
+        print('b')
         max_val.masked_scatter_(gt_mask, max_temp)
+        print('c')
         max_ind.masked_fill_(gt_mask, ind + 1)
+        print('d')
 
+        print(grad_output.size())
+        print(grad_output.select(3, ind + 1).size())
         grad_output_temp = grad_output.select(3, ind + 1).unsqueeze(3)
-        output.scatter_add_(3, un_max_ind, grad_output_temp)
+        print(grad_output.size())
+        print(grad_output_temp.size())
+        output.scatter_add(3, un_max_ind, grad_output_temp)
 
     return output
 
