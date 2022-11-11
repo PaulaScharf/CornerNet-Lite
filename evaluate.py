@@ -45,6 +45,7 @@ def test(db, system_config, model, args):
     if suffix is not None:
         result_dir = os.path.join(result_dir, suffix)
 
+    print('saving results to: ' + str(result_dir))
     make_dirs([result_dir])
 
     test_iter = system_config.max_iter if testiter is None else testiter

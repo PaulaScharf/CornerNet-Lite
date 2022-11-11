@@ -280,6 +280,8 @@ def cornernet_saccade(db, nnet, result_dir, debug=False, decode_func=batch_decod
 
     result_json = os.path.join(result_dir, "results.json")
     detections  = db.convert_to_coco(top_bboxes)
+    print('detections: \n')
+    print(detections)
     with open(result_json, "w") as f:
         json.dump(detections, f)
 
