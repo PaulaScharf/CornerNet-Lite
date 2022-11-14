@@ -57,6 +57,7 @@ def backward(input, grad_output):
         max_val.masked_scatter_(gt_mask, max_temp)
         max_ind.masked_fill_(gt_mask, width - ind - 1)
 
+        un_max_ind = max_ind.unsqueeze(3)
         grad_output_temp = grad_output.select(3, width - ind - 1).unsqueeze(3)
         output.scatter_add_(3, un_max_ind, grad_output_temp)
 
