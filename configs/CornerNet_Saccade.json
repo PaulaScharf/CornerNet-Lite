@@ -1,7 +1,7 @@
 {
     "system": {
         "dataset": "COCO",
-        "batch_size": 2,
+        "batch_size": 48,
         "sampling_function": "cornernet_saccade",
 
         "train_split": "trainval",
@@ -15,13 +15,13 @@
         "opt_algo": "adam",
         "prefetch_size": 5,
 
-        "max_iter": 1,
-        "stepsize": 4,
-        "snapshot": 1,
+        "max_iter": 500000,
+        "stepsize": 450000,
+        "snapshot": 5000,
 
-        "chunk_sizes": [2]
+        "chunk_sizes": [48]
     },
-    
+
     "db": {
         "rand_scale_min": 0.5,
         "rand_scale_max": 1.1,
