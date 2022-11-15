@@ -35,7 +35,7 @@ def backward(input, grad_output):
     height = input.size(2)
     width = input.size(3)
 
-    max_val = torch.zeros((batch, channel, height), dtype=torch.float, device=device)
+    max_val = torch.zeros((batch, channel, height), dtype=torch.uint8, device=device)
     max_ind = torch.zeros((batch, channel, height), dtype=torch.long, device=device)
 
     input_temp = input.select(3, 0)

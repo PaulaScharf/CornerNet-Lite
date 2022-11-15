@@ -47,7 +47,7 @@ def backward(input, grad_output):
     output_temp.copy_(grad_output_temp)
 
     un_max_ind = max_ind.unsqueeze(2)
-    gt_mask = torch.zeros((batch, channel, height), dtype=torch.bool, device=device)
+    gt_mask = torch.zeros((batch, channel, height), dtype=torch.uint8, device=device)
     max_temp = torch.zeros((batch, channel, height), dtype=torch.float, device=device)
     for ind in range(height-1): # for (int32_t ind = 0; ind < height - 1; ++ind) {
         input_temp = input.select(2, ind + 1)
