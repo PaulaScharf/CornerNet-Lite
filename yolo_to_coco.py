@@ -30,7 +30,7 @@ def convert_labels(org, dest, split, names):
         })
     
     org_img_dir = org
-    org_lab_dir = org.replace("images", "labels")
+    org_lab_dir = org.replace("/images/", "/labels/")
     src_files = os.listdir(org_img_dir)
     pbar = enumerate(src_files)
     pbar = tqdm(pbar, total=len(src_files))  # progress bar
@@ -85,6 +85,9 @@ def convert_labels(org, dest, split, names):
 def move_images(org, dest, split):
     print('[INFO] copying images from source...')
     split_dest = os.path.join(dest, split)
+    if not os.path.isdir(split_dest):
+        print('[INFO] reuse existing split')
+        return split_dest
     os.mkdir(split_dest)
 
 
@@ -99,6 +102,7 @@ def move_images(org, dest, split):
     return split_dest
 
 def convert_yolo_coco(data_yaml, dest_dir):
+    print('[INFO] converting yolo to dir: ' + dest_dir)
     dest_img_dir = os.path.join(dest_dir, "images")
     dest_anno_dir = os.path.join(dest_dir, "annotations")
     if not os.path.isdir(dest_dir):
@@ -134,4 +138,4 @@ def convert_yolo_coco(data_yaml, dest_dir):
 
     return res_train_imgs, res_val_imgs, res_test_imgs, res_train_annos, res_val_annos, res_test_annos
 
-convert_yolo_coco("/scratch/tmp/p_scha35/yolo-test/data/yolo_normal/data.yaml", "/scratch/tmp/p_scha35/yolo-test/CornerNet-Lite/data/custom")
+convert_yolo_coco("/scratch/tmp/p_scha35/yolo-test/data/yolo_normal/data_tiled.yaml", "/scratch/tmp/p_scha35/yolo-test/CornerNet-Lite/data/yolo_normal_tiled_filtered")
