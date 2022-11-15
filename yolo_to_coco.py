@@ -85,7 +85,7 @@ def convert_labels(org, dest, split, names):
 def move_images(org, dest, split):
     print('[INFO] copying images from source...')
     split_dest = os.path.join(dest, split)
-    if not os.path.isdir(split_dest):
+    if os.path.isdir(split_dest):
         print('[INFO] reuse existing split')
         return split_dest
     os.mkdir(split_dest)
