@@ -37,7 +37,7 @@ def convert_labels(org, dest, split, names):
     for i, file_name in pbar:
         full_img_path = os.path.join(org_img_dir, file_name)
         img = cv2.imread(full_img_path)
-        if img != None:
+        if img is None:
             img_shape = img.shape
         else:
             img_shape = [3456,4608]
@@ -134,4 +134,4 @@ def convert_yolo_coco(data_yaml, dest_dir):
 
     return res_train_imgs, res_val_imgs, res_test_imgs, res_train_annos, res_val_annos, res_test_annos
 
-convert_yolo_coco("/home/paula/documents/masterthesis/paulas_data/multi_test/data.yaml", "/home/paula/documents/masterthesis/CornerNet-Lite/data/custom")
+convert_yolo_coco("/scratch/tmp/p_scha35/yolo-test/data/yolo_normal/data.yaml", "/scratch/tmp/p_scha35/yolo-test/CornerNet-Lite/data/custom")
