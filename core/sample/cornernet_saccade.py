@@ -159,7 +159,11 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
         k_ind  = (k_ind + 1) % db_size
 
         image_path = db.image_path(db_ind)
-        image      = cv2.imread(image_path)
+        # print(image_path)
+        if image_path.endswith('.npy'):
+            image = np.load(image_path)
+        else:
+            image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
 
         orig_detections = db.detections(db_ind)
         keep_inds       = np.arange(orig_detections.shape[0])
