@@ -113,7 +113,7 @@ def convert_yolo_coco(data_yaml, dest_dir):
         os.mkdir(dest_img_dir)
         os.mkdir(dest_anno_dir)
     else:
-        raise Exception("Destination folder should be empty")
+        print("[WARN] Destination folder was not empty")
 
     print('[INFO] reading data.yaml...')
     with open(data_yaml) as f:
