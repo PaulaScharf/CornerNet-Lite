@@ -42,6 +42,7 @@ def parse_args():
     parser.add_argument("--dist-url", default=None, type=str,
                         help="url used to set up distributed training")
     parser.add_argument("--dist-backend", default="nccl", type=str)
+    parser.add_argument("--data", default=None, type=str)
 
     args = parser.parse_args()
     return args
@@ -217,6 +218,7 @@ def main(gpu, ngpus_per_node, args):
     dataset = system_config.dataset
     workers = args.workers
     print("Process {}: using {} workers".format(rank, workers))
+    config["db"]["name"] = args.data
     training_dbs = [datasets[dataset](config["db"], split=train_split, sys_config=system_config) for _ in range(workers)]
     validation_db = datasets[dataset](config["db"], split=val_split, sys_config=system_config)
 

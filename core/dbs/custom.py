@@ -36,7 +36,10 @@ class CUSTOM(DETECTION):
         self._name2coco = {cls_name: cls_id for cls_name, cls_id in self._coco2name.items()}
 
         if split is not None:
-            custom_dir = os.path.join(sys_config.data_dir, "custom")
+            dir_name = "yolo_normal"
+            if db_config["name"] is not None:
+                dir_name = db_config["name"]
+            custom_dir = os.path.join(sys_config.data_dir, dir_name)
 
             self._split     = {
                 "train": "train",
