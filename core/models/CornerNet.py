@@ -28,10 +28,10 @@ class model(hg_net):
             nn.BatchNorm2d(256)
         )
 
-    def __init__(self):
+    def __init__(self, input_channels=3):
         stacks  = 2
         pre     = nn.Sequential(
-            convolution(7, 3, 128, stride=2),
+            convolution(7, input_channels, 128, stride=2),
             residual(128, 256, stride=2)
         )
         hg_mods = nn.ModuleList([

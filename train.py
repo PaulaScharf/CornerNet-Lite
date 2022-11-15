@@ -43,6 +43,8 @@ def parse_args():
                         help="url used to set up distributed training")
     parser.add_argument("--dist-backend", default="nccl", type=str)
     parser.add_argument("--data", default=None, type=str)
+    parser.add_argument('--four-channels', action='store_true', help='accept input images with 4 channels')
+    parser.add_argument('--multi-frame', type=int, default=1, choices=range(1,101), help='how many frames to load at once')
 
     args = parser.parse_args()
     return args
@@ -209,7 +211,7 @@ def main(gpu, ngpus_per_node, args):
 
     model_file  = "core.models.{}".format(args.cfg_file)
     model_file  = importlib.import_module(model_file)
-    model       = model_file.model()
+    model       = model_file.model(input_channels=((4 if args.four_channels else 3) * args.multi_frame))
 
     train_split = system_config.train_split
     val_split   = system_config.val_split
