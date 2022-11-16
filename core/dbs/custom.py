@@ -26,7 +26,8 @@ class CUSTOM(DETECTION):
             self._mean = np.append(self._mean,0.47026115) # I dont really know, what these values do...
             self._std = np.append(self._std,0.27809835)
             self._eig_val = np.append(self._eig_val,0.00341571)
-            self._eig_vec = np.append(self._eig_vec,[[-0.56089297, 0.71832671, 0.41158938]], axis=0)
+            self._eig_vec = np.append(self._eig_vec,[[-0.56089297], [0.71832671], [0.41158938]], axis=1)
+            self._eig_vec = np.append(self._eig_vec,[[-0.56089297, 0.71832671, 0.41158938, 0.41158938]], axis=0)
         self._coco_cls_ids = [
             1
         ]
