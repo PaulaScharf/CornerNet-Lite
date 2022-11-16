@@ -183,7 +183,7 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug, channels=3):
         image, detections = scale_image_detections(image, detections, scale)
         ref_detection     = detections[ref_ind].copy()
 
-        image, detections, border = crop_image_dets(image, detections, ref_ind, input_size, channels=channels, rand_center=rand_center)
+        image, detections, border = crop_image_dets(image, detections, ref_ind, input_size, channels=(4 if db.configs["four_channels"] else 3), rand_center=rand_center)
 
         detections, clip_inds = clip_detections(border, detections)
         keep_inds = keep_inds[clip_inds]

@@ -229,6 +229,8 @@ def main(gpu, ngpus_per_node, args):
     workers = args.workers
     print("Process {}: using {} workers".format(rank, workers))
     config["db"]["name"] = args.data
+    config["db"]["four_channels"] = args.four_channels
+    config["db"]["multi_frame"] = args.multi_frame
     training_dbs = [datasets[dataset](config["db"], split=train_split, sys_config=system_config) for _ in range(workers)]
     validation_db = datasets[dataset](config["db"], split=val_split, sys_config=system_config)
 

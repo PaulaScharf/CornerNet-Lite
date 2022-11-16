@@ -15,13 +15,18 @@ class CUSTOM(DETECTION):
         # TODO: what is this??
         self._mean    = np.array([0.40789654, 0.44719302, 0.47026115], dtype=np.float32)
         self._std     = np.array([0.28863828, 0.27408164, 0.27809835], dtype=np.float32)
-        self._eig_val = np.array([0.2141788, 0.01817699, 0.00341571], dtype=np.float32)
+        self._eig_val = np.array([0.2141788, 0.01817699, 0.00341571, 0.00341571], dtype=np.float32)
         self._eig_vec = np.array([
             [-0.58752847, -0.69563484, 0.41340352],
             [-0.5832747, 0.00994535, -0.81221408],
             [-0.56089297, 0.71832671, 0.41158938]
         ], dtype=np.float32)
 
+        if db_config.four_channels:
+            self._mean.append(0.47026115) # I dont really know, what these values do...
+            self._std.append(0.27809835)
+            self._eig_val.append(0.00341571)
+            self._eig_vec.append([-0.56089297, 0.71832671, 0.41158938])
         self._coco_cls_ids = [
             1
         ]
