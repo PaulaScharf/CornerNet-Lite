@@ -22,11 +22,11 @@ class CUSTOM(DETECTION):
             [-0.56089297, 0.71832671, 0.41158938]
         ], dtype=np.float32)
 
-        if db_config.four_channels:
-            self._mean.append(0.47026115) # I dont really know, what these values do...
-            self._std.append(0.27809835)
-            self._eig_val.append(0.00341571)
-            self._eig_vec.append([-0.56089297, 0.71832671, 0.41158938])
+        if db_config["four_channels"]:
+            np.append(self._mean,0.47026115) # I dont really know, what these values do...
+            np.append(self._std,0.27809835)
+            np.append(self._eig_val,0.00341571)
+            np.append(self._eig_vec,[-0.56089297, 0.71832671, 0.41158938])
         self._coco_cls_ids = [
             1
         ]
