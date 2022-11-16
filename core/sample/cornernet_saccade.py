@@ -30,7 +30,7 @@ def clip_detections(border, detections):
     keep_inds = np.where(keep_inds)[0]
     return detections[keep_inds], keep_inds
 
-def crop_image_dets(image, dets, ind, input_size, output_size=None, random_crop=True, rand_center=True):
+def crop_image_dets(image, dets, ind, input_size, channels=3, output_size=None, random_crop=True, rand_center=True):
     if ind is not None:
         det_x0, det_y0, det_x1, det_y1 = dets[ind, 0:4]
     else: 
@@ -64,7 +64,7 @@ def crop_image_dets(image, dets, ind, input_size, output_size=None, random_crop=
         ymax  = min((det_y0 + det_y1) // 2 + np.random.randint(0, 15), image_height - 1)
         yc    = np.random.randint(int(ymin), int(ymax) + 1)
 
-    image, border, offset = crop_image(image, [yc, xc], input_size, output_size=output_size)
+    image, border, offset = crop_image(image, [yc, xc], input_size, channels=channels, output_size=output_size)
     dets[:, 0:4:2] -= offset[1]
     dets[:, 1:4:2] -= offset[0]
     return image, dets, border
@@ -113,7 +113,7 @@ def create_attention_mask(atts, ratios, sizes, detections):
                 y = (y / ratio).astype(np.int32)
                 att[y, x] = 1
 
-def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
+def cornernet_saccade(system_configs, db, k_ind, data_aug, debug, channels=3):
     data_rng   = system_configs.data_rng
     batch_size = system_configs.batch_size
 
@@ -136,7 +136,7 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
     max_scale   = db.configs["max_scale"]
     max_objects = 128
 
-    images     = np.zeros((batch_size, 3, input_size[0], input_size[1]), dtype=np.float32)
+    images     = np.zeros((batch_size, channels, input_size[0], input_size[1]), dtype=np.float32)
     tl_heats   = np.zeros((batch_size, categories, output_size[0], output_size[1]), dtype=np.float32)
     br_heats   = np.zeros((batch_size, categories, output_size[0], output_size[1]), dtype=np.float32)
     tl_valids  = np.zeros((batch_size, categories, output_size[0], output_size[1]), dtype=np.float32)
@@ -183,7 +183,7 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
         image, detections = scale_image_detections(image, detections, scale)
         ref_detection     = detections[ref_ind].copy()
 
-        image, detections, border = crop_image_dets(image, detections, ref_ind, input_size, rand_center=rand_center)
+        image, detections, border = crop_image_dets(image, detections, ref_ind, input_size, channels=channels, rand_center=rand_center)
 
         detections, clip_inds = clip_detections(border, detections)
         keep_inds = keep_inds[clip_inds]

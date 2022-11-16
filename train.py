@@ -51,13 +51,13 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def prefetch_data(system_config, db, queue, sample_data, data_aug):
+def prefetch_data(system_config, db, queue, sample_data, data_aug, channels):
     ind = 0
     print("start prefetching data...")
     np.random.seed(os.getpid())
     while True:
         try:
-            data, ind = sample_data(system_config, db, ind, data_aug=data_aug)
+            data, ind = sample_data(system_config, db, ind, channels=channels, data_aug=data_aug)
             queue.put(data)
         except Exception as e:
             traceback.print_exc()
@@ -80,8 +80,8 @@ def pin_memory(data_queue, pinned_data_queue, sema):
         if sema.acquire(blocking=False):
             return
 
-def init_parallel_jobs(system_config, dbs, queue, fn, data_aug):
-    tasks = [Process(target=prefetch_data, args=(system_config, db, queue, fn, data_aug)) for db in dbs]
+def init_parallel_jobs(system_config, dbs, queue, fn, data_aug, channels=3):
+    tasks = [Process(target=prefetch_data, args=(system_config, db, queue, fn, data_aug, channels)) for db in dbs]
     for task in tasks:
         task.daemon = True
         task.start()
@@ -126,10 +126,12 @@ def train(training_dbs, validation_db, system_config, model, args):
     pinned_training_queue   = queue.Queue(system_config.prefetch_size)
     pinned_validation_queue = queue.Queue(5)
 
+    channels = ((4 if args.four_channels else 3) * args.multi_frame)
+
     # allocating resources for parallel reading
-    training_tasks = init_parallel_jobs(system_config, training_dbs, training_queue, data_sampling_func, True)
+    training_tasks = init_parallel_jobs(system_config, training_dbs, training_queue, data_sampling_func, True, channels)
     if val_iter:
-        validation_tasks = init_parallel_jobs(system_config, [validation_db], validation_queue, data_sampling_func, False)
+        validation_tasks = init_parallel_jobs(system_config, [validation_db], validation_queue, data_sampling_func, False, channels)
 
     training_pin_semaphore   = threading.Semaphore()
     validation_pin_semaphore = threading.Semaphore()
@@ -213,9 +215,11 @@ def main(gpu, ngpus_per_node, args):
         config["system"]["snapshot_name"] = args.snapshot_name
     system_config = SystemConfig().update_config(config["system"])
 
+    channels = ((4 if args.four_channels else 3) * args.multi_frame)
+
     model_file  = "core.models.{}".format(args.model)
     model_file  = importlib.import_module(model_file)
-    model       = model_file.model(input_channels=((4 if args.four_channels else 3) * args.multi_frame))
+    model       = model_file.model(input_channels=channels)
 
     train_split = system_config.train_split
     val_split   = system_config.val_split

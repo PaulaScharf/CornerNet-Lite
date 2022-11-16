@@ -90,7 +90,7 @@ def _get_border(border, size):
         i *= 2
     return border // i
 
-def random_crop(image, detections, random_scales, view_size, border=64):
+def random_crop(image, detections, random_scales, view_size, channels=3, border=64):
     view_height, view_width   = view_size
     image_height, image_width = image.shape[0:2]
 
@@ -98,7 +98,7 @@ def random_crop(image, detections, random_scales, view_size, border=64):
     height = int(view_height * scale)
     width  = int(view_width  * scale)
 
-    cropped_image = np.zeros((height, width, 3), dtype=image.dtype)
+    cropped_image = np.zeros((height, width, channels), dtype=image.dtype)
 
     w_border = _get_border(border, image_width)
     h_border = _get_border(border, image_height)
@@ -127,7 +127,7 @@ def random_crop(image, detections, random_scales, view_size, border=64):
 
     return cropped_image, cropped_detections
 
-def crop_image(image, center, size, output_size=None):
+def crop_image(image, center, size, channels=3, output_size=None):
     if output_size == None:
         output_size = size
 
