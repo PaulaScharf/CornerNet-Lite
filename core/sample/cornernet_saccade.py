@@ -212,7 +212,7 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug, channels=3):
         if not debug:
             image = image.astype(np.float32) / 255.
             color_jittering_(data_rng, image)
-            lighting_(data_rng, image, 0.1, db.eig_val, db.eig_vec)
+            lighting_(data_rng, image, 0.1, db.eig_val, db.eig_vec, channels=channels)
             normalize_(image, db.mean, db.std)
         images[b_ind] = image.transpose((2, 0, 1))
 

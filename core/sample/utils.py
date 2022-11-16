@@ -9,8 +9,8 @@ def normalize_(image, mean, std):
     image -= mean
     image /= std
 
-def lighting_(data_rng, image, alphastd, eigval, eigvec):
-    alpha = data_rng.normal(scale=alphastd, size=(3, ))
+def lighting_(data_rng, image, alphastd, eigval, eigvec, channels=3):
+    alpha = data_rng.normal(scale=alphastd, size=(channels, ))
     image += np.dot(eigvec, eigval * alpha)
 
 def blend_(alpha, image1, image2):
