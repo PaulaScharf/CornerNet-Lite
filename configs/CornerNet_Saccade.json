@@ -18,6 +18,7 @@
         "max_iter": 500000,
         "stepsize": 450000,
         "snapshot": 5000,
+        "snapshot_name": "originals",
 
         "chunk_sizes": [48]
     },
