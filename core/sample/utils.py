@@ -135,7 +135,7 @@ def crop_image(image, center, size, channels=3, output_size=None):
     height, width       = size
     o_height, o_width   = output_size
     im_height, im_width = image.shape[0:2]
-    cropped_image       = np.zeros((o_height, o_width, 3), dtype=image.dtype)
+    cropped_image       = np.zeros((o_height, o_width, channels), dtype=image.dtype)
 
     x0, x1 = max(0, ctx - width // 2), min(ctx + width // 2, im_width)
     y0, y1 = max(0, cty - height // 2), min(cty + height // 2, im_height)
