@@ -45,6 +45,7 @@ def parse_args():
     parser.add_argument("--data", default=None, type=str)
     parser.add_argument('--four-channels', action='store_true', help='accept input images with 4 channels')
     parser.add_argument('--multi-frame', type=int, default=1, choices=range(1,101), help='how many frames to load at once')
+    parser.add_argument("--snapshot-name", default=None, type=str)
 
     args = parser.parse_args()
     return args
@@ -207,6 +208,8 @@ def main(gpu, ngpus_per_node, args):
         config = json.load(f)
 
     config["system"]["snapshot_name"] = args.cfg_file
+    if args.snapshot_name is not None:
+        config["system"]["snapshot_name"] = args.snapshot_name
     system_config = SystemConfig().update_config(config["system"])
 
     model_file  = "core.models.{}".format(args.cfg_file)
