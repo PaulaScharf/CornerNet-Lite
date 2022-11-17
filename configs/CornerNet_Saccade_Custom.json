@@ -23,16 +23,17 @@
     },
     
     "db": {
-        "rand_scale_min": 0.5,
-        "rand_scale_max": 1.1,
+        "rand_scale_min": 1.0, 
+        "rand_scale_max": 1.01,
         "rand_scale_step": 0.1,
         "rand_scales": null,
+        "rand_crop": true,
 
-        "rand_full_crop": true,
+        "rand_full_crop": false,
         "gaussian_bump": true,
         "gaussian_iou": 0.5,
 
-        "min_scale": 16,
+        "min_scale": 6,
         "view_sizes": [],
 
         "height_mult": 31,
@@ -49,7 +50,7 @@
 
         "top_k": 12,
         "num_dets": 12,
-        "categories": 80,
+        "categories": 1,
         "ae_threshold": 0.3,
         "nms_threshold": 0.5,
 
