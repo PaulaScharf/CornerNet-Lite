@@ -30,14 +30,15 @@ def contrast_(data_rng, image, gs, gs_mean, var):
     alpha = 1. + data_rng.uniform(low=-var, high=var)
     blend_(alpha, image, gs_mean)
 
-def color_jittering_(data_rng, image):
+def color_jittering_(data_rng, images):
     functions = [brightness_, contrast_, saturation_]
     random.shuffle(functions)
 
-    gs = grayscale(image)
-    gs_mean = gs.mean()
-    for f in functions:
-        f(data_rng, image, gs, gs_mean, 0.4)
+    for i, image in enumerate(images):
+        gs = grayscale(image)
+        gs_mean = gs.mean()
+        for f in functions:
+            f(data_rng, images[i], gs, gs_mean, 0.4)
 
 def gaussian2D(shape, sigma=1):
     m, n = [(ss - 1.) / 2. for ss in shape]

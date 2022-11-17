@@ -37,7 +37,7 @@ def convert_labels(org, dest, split, names):
     for i, file_name in pbar:
         full_img_path = os.path.join(org_img_dir, file_name)
         img = cv2.imread(full_img_path)
-        if img is None:
+        if img is not None:
             img_shape = img.shape
         else:
             img_shape = [3456,4608]
@@ -75,7 +75,7 @@ def convert_labels(org, dest, split, names):
                         "id": 0
                     })
     
-    split_dest = os.path.join(dest, split+".json")
+    split_dest = os.path.join(dest, "instances_"+split+".json")
 
     with open(split_dest, 'w') as f:
         json.dump(output, f)
@@ -138,4 +138,4 @@ def convert_yolo_coco(data_yaml, dest_dir):
 
     return res_train_imgs, res_val_imgs, res_test_imgs, res_train_annos, res_val_annos, res_test_annos
 
-convert_yolo_coco("/scratch/tmp/p_scha35/yolo-test/data/yolo_normal/data_tiled.yaml", "/scratch/tmp/p_scha35/yolo-test/CornerNet-Lite/data/yolo_normal_tiled_filtered")
+convert_yolo_coco("/scratch/tmp/p_scha35/yolo-test/data/yolo_stacked/data_tiled.yaml", "/scratch/tmp/p_scha35/yolo-test/CornerNet-Lite/data/yolo_stacked_tiled_filtered")

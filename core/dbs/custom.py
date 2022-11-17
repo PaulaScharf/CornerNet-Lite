@@ -41,6 +41,9 @@ class CUSTOM(DETECTION):
         self._coco2name = {cls_id: cls_name for cls_id, cls_name in zip(self._coco_cls_ids, self._coco_cls_names)}
         self._name2coco = {cls_name: cls_id for cls_name, cls_id in self._coco2name.items()}
 
+        self._four_channels = db_config["four_channels"] if db_config["four_channels"] is not None else False
+        self._multi_frame = db_config["multi_frame"] if db_config["multi_frame"] is not None else 1
+
         if split is not None:
             dir_name = "yolo_normal"
             if db_config["name"] is not None:

@@ -51,13 +51,13 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def prefetch_data(system_config, db, queue, sample_data, data_aug, channels):
+def prefetch_data(system_config, db, queue, sample_data, data_aug):
     ind = 0
     print("start prefetching data...")
     np.random.seed(os.getpid())
     while True:
         try:
-            data, ind = sample_data(system_config, db, ind, channels=channels, data_aug=data_aug)
+            data, ind = sample_data(system_config, db, ind, data_aug=data_aug)
             queue.put(data)
         except Exception as e:
             traceback.print_exc()
@@ -80,8 +80,8 @@ def pin_memory(data_queue, pinned_data_queue, sema):
         if sema.acquire(blocking=False):
             return
 
-def init_parallel_jobs(system_config, dbs, queue, fn, data_aug, channels=3):
-    tasks = [Process(target=prefetch_data, args=(system_config, db, queue, fn, data_aug, channels)) for db in dbs]
+def init_parallel_jobs(system_config, dbs, queue, fn, data_aug):
+    tasks = [Process(target=prefetch_data, args=(system_config, db, queue, fn, data_aug)) for db in dbs]
     for task in tasks:
         task.daemon = True
         task.start()
@@ -129,9 +129,9 @@ def train(training_dbs, validation_db, system_config, model, args):
     channels = ((4 if args.four_channels else 3) * args.multi_frame)
 
     # allocating resources for parallel reading
-    training_tasks = init_parallel_jobs(system_config, training_dbs, training_queue, data_sampling_func, True, channels)
+    training_tasks = init_parallel_jobs(system_config, training_dbs, training_queue, data_sampling_func, True)
     if val_iter:
-        validation_tasks = init_parallel_jobs(system_config, [validation_db], validation_queue, data_sampling_func, False, channels)
+        validation_tasks = init_parallel_jobs(system_config, [validation_db], validation_queue, data_sampling_func, False)
 
     training_pin_semaphore   = threading.Semaphore()
     validation_pin_semaphore = threading.Semaphore()

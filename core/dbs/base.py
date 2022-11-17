@@ -17,6 +17,9 @@ class BASE(object):
 
         self._data_rng = None
 
+        self._four_channels = False
+        self._multi_frame = 1
+
     @property
     def configs(self):
         return self._configs
@@ -44,6 +47,14 @@ class BASE(object):
     @property
     def split(self):
         return self._split
+
+    @property
+    def four_channels(self):
+        return self._four_channels
+    
+    @property
+    def multi_frame(self):
+        return self._multi_frame
 
     def update_config(self, new):
         for key in new:
