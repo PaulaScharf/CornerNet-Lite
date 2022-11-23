@@ -110,7 +110,6 @@ def train(training_dbs, validation_db, system_config, model, args):
     val_iter         = system_config.val_iter
     display          = system_config.display
     decay_rate       = system_config.decay_rate
-    stepsize         = system_config.stepsize
 
     print("Process {}: building model...".format(rank))
     nnet = NetworkFactory(system_config, model, distributed=distributed, gpu=gpu)
@@ -125,8 +124,6 @@ def train(training_dbs, validation_db, system_config, model, args):
     # queues storing pinned data for training
     pinned_training_queue   = queue.Queue(system_config.prefetch_size)
     pinned_validation_queue = queue.Queue(5)
-
-    channels = ((4 if args.four_channels else 3) * args.multi_frame)
 
     # allocating resources for parallel reading
     training_tasks = init_parallel_jobs(system_config, training_dbs, training_queue, data_sampling_func, True)

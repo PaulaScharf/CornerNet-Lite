@@ -16,6 +16,7 @@ torch.backends.cudnn.benchmark = False
 def parse_args():
     parser = argparse.ArgumentParser(description="Evaluation Script")
     parser.add_argument("cfg_file", help="config file", type=str)
+    parser.add_argument("model", help="model", type=str)
     parser.add_argument("--testiter", dest="testiter",
                         help="test at iteration i",
                         default=None, type=int)
@@ -24,6 +25,9 @@ def parse_args():
                         default="validation", type=str)
     parser.add_argument("--suffix", dest="suffix", default=None, type=str)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument('--four-channels', action='store_true', help='accept input images with 4 channels')
+    parser.add_argument('--multi-frame', type=int, default=1, choices=range(1,101), help='how many frames to load at once')
+    parser.add_argument("--snapshot-name", default=None, type=str)
 
     args = parser.parse_args()
     return args
@@ -71,11 +75,17 @@ def main(args):
         config = json.load(f)
             
     config["system"]["snapshot_name"] = args.cfg_file
+    if args.snapshot_name is not None:
+        config["system"]["snapshot_name"] = args.snapshot_name
     system_config = SystemConfig().update_config(config["system"])
 
-    model_file  = "core.models.{}".format(args.cfg_file)
+    config["db"]["four_channels"] = args.four_channels
+    config["db"]["multi_frame"] = args.multi_frame
+    channels = ((4 if args.four_channels else 3) * args.multi_frame)
+
+    model_file  = "core.models.{}".format(args.model)
     model_file  = importlib.import_module(model_file)
-    model       = model_file.model()
+    model       = model_file.model(input_channels=channels)
     print('loading model file: ' + str(model_file))
 
     train_split = system_config.train_split
