@@ -255,7 +255,7 @@ def cornernet_saccade(db, nnet, result_dir, debug=False, decode_func=batch_decod
 
     timer = Timer()
     top_bboxes = {}
-    for k_ind in tqdm(range(0, num_images), ncols=80, desc="locating kps"):
+    for k_ind in tqdm(range(0, num_images), ncols=1, desc="locating kps"):
         db_ind = db_inds[k_ind]
 
         image_id   = db.image_ids(db_ind)
@@ -309,8 +309,8 @@ def cornernet_saccade_inference(db, nnet, image, decode_func=batch_decode):
 
     num_iterations = len(att_thresholds)
 
-    im_mean = torch.cuda.FloatTensor(db.mean).reshape(1, 3, 1, 1)
-    im_std  = torch.cuda.FloatTensor(db.std).reshape(1, 3, 1, 1)
+    im_mean = torch.cuda.FloatTensor(db.mean).reshape(1, 3, 1, 1) # TODO: this is the number of channels, right?
+    im_std  = torch.cuda.FloatTensor(db.std).reshape(1, 3, 1, 1) # TODO: this is the number of channels, right?
 
     detections    = []
     height, width = image.shape[0:2]
