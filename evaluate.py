@@ -20,6 +20,7 @@ def parse_args():
     parser.add_argument("--testiter", dest="testiter",
                         help="test at iteration i",
                         default=None, type=int)
+    parser.add_argument("--data", default=None, type=str)
     parser.add_argument("--split", dest="split",
                         help="which split to use",
                         default="validation", type=str)
@@ -79,6 +80,7 @@ def main(args):
         config["system"]["snapshot_name"] = args.snapshot_name
     system_config = SystemConfig().update_config(config["system"])
 
+    config["db"]["name"] = args.data
     config["db"]["four_channels"] = args.four_channels
     config["db"]["multi_frame"] = args.multi_frame
     channels = ((4 if args.four_channels else 3) * args.multi_frame)
