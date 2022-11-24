@@ -253,6 +253,8 @@ def cornernet_saccade(db, nnet, result_dir, debug=False, decode_func=batch_decod
     num_images = db_inds.size
     categories = db.configs["categories"]
 
+    no_channels = (4 if db.four_channels else 3)
+
     timer = Timer()
     top_bboxes = {}
     for k_ind in tqdm(range(0, num_images), ncols=1, desc="locating kps"):
@@ -260,22 +262,28 @@ def cornernet_saccade(db, nnet, result_dir, debug=False, decode_func=batch_decod
 
         image_id   = db.image_ids(db_ind)
         image_path = db.image_path(db_ind)
-        image      = cv2.imread(image_path)
+        images_loaded = []
+        if image_path.endswith('.npy'):
+            image = np.load(image_path)
+            if db.multi_frame > 1:
+                for i in range(int(image.shape[2]/no_channels)):
+                    images_loaded.append(image[:,:,image.shape[2]-no_channels*(i+1):image.shape[2]-no_channels*i])
+        else:
+            images_loaded = [cv2.imread(image_path, cv2.IMREAD_UNCHANGED)]
+            image      = images_loaded[0]
 
         timer.tic()
         top_bboxes[image_id] = cornernet_saccade_inference(db, nnet, image)
         timer.toc()
 
         if debug:
-            image_path = db.image_path(db_ind)
-            image      = cv2.imread(image_path)
             bboxes     = {
                 db.cls2name(j): top_bboxes[image_id][j]
                 for j in range(1, categories + 1)
             }
-            image      = draw_bboxes(image, bboxes)
+            images_loaded[0]      = draw_bboxes(images_loaded[0], bboxes)
             debug_file = os.path.join(debug_dir, "{}.jpg".format(db_ind))
-            cv2.imwrite(debug_file, image)
+            cv2.imwrite(debug_file, images_loaded[0])
     print('average time: {}'.format(timer.average_time))
 
     result_json = os.path.join(result_dir, "results.json")

@@ -163,7 +163,6 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
 
         image_path = db.image_path(db_ind)
         images_loaded = []
-        # print(image_path)
         if image_path.endswith('.npy'):
             image = np.load(image_path)
             if db.multi_frame > 1:
