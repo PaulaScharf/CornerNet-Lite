@@ -38,7 +38,7 @@ def make_dirs(directories):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-def test(db, system_config, model, args):
+def test(db, system_config, db_config, model, args):
     split    = args.split
     testiter = args.testiter
     debug    = args.debug
@@ -57,7 +57,7 @@ def test(db, system_config, model, args):
     print("loading parameters at iteration: {}".format(test_iter))
 
     print("building neural network...")
-    nnet = NetworkFactory(system_config, model)
+    nnet = NetworkFactory(system_config, db_config, model)
     print("loading parameters...")
     nnet.load_params(test_iter)
 
@@ -111,7 +111,7 @@ def main(args):
     print("db config...")
     pprint.pprint(testing_db.configs)
 
-    test(testing_db, system_config, model, args)
+    test(testing_db, system_config, config["db"], model, args)
 
 if __name__ == "__main__":
     args = parse_args()

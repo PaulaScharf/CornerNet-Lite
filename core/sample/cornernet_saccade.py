@@ -291,6 +291,7 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
         tag_masks[b_ind, :tag_len] = 1
 
     images     = torch.from_numpy(images)
+    detections = torch.from_numpy(detections)
     tl_heats   = torch.from_numpy(tl_heats)
     br_heats   = torch.from_numpy(br_heats)
     tl_regrs   = torch.from_numpy(tl_regrs)
@@ -304,5 +305,7 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
 
     return {
         "xs": [images],
-        "ys": [tl_heats, br_heats, tag_masks, tl_regrs, br_regrs, tl_tags, br_tags, tl_valids, br_valids, attentions]
+        "ys": [tl_heats, br_heats, tag_masks, tl_regrs, br_regrs, tl_tags, br_tags, tl_valids, br_valids, attentions],
+        "orig": [detections],
+        "paths": [db.db_inds[:]]
     }, k_ind

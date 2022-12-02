@@ -112,7 +112,7 @@ class CornerNet_Saccade_Loss(nn.Module):
         br_tags  = outs[3]
         tl_offs  = outs[4] # offsets
         br_offs  = outs[5]
-        atts     = outs[6] # sttribute maps
+        atts     = outs[6] # attribute maps
 
         gt_tl_heat  = targets[0]
         gt_br_heat  = targets[1]

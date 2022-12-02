@@ -51,6 +51,7 @@ class CUSTOM(DETECTION):
             if db_config["name"] is not None:
                 dir_name = db_config["name"]
             custom_dir = os.path.join(sys_config.data_dir, dir_name)
+            print("[INFO] data dir name: " + dir_name)
 
             self._split     = {
                 "train": "train",
@@ -151,7 +152,10 @@ class CUSTOM(DETECTION):
         eval_ids = [self._eval_ids[image_id] for image_id in image_ids]
         cat_ids  = [self._cls2coco[cls_id] for cls_id in cls_ids]
 
-        coco_dets = coco.loadRes(result_json)
+        if (isinstance(result_json, str)):
+            coco_dets = coco.loadRes(result_json)
+        else:
+            coco_dets = result_json
         coco_eval = COCOeval(coco, coco_dets, "bbox")
         coco_eval.params.imgIds = eval_ids
         coco_eval.params.catIds = cat_ids

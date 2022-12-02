@@ -91,7 +91,7 @@ def terminate_tasks(tasks):
     for task in tasks:
         task.terminate()
 
-def train(training_dbs, validation_db, system_config, model, args):
+def train(training_dbs, validation_db, system_config, db_config, model, args):
     # reading arguments from command
     start_iter  = args.start_iter
     distributed = args.distributed
@@ -112,7 +112,7 @@ def train(training_dbs, validation_db, system_config, model, args):
     decay_rate       = system_config.decay_rate
 
     print("Process {}: building model...".format(rank))
-    nnet = NetworkFactory(system_config, model, distributed=distributed, gpu=gpu)
+    nnet = NetworkFactory(system_config, db_config, model, distributed=distributed, gpu=gpu)
     if initialize:
         nnet.save_params(0)
         exit(0)
@@ -166,8 +166,7 @@ def train(training_dbs, validation_db, system_config, model, args):
     with stdout_to_tqdm() as save_stdout:
         for iteration in tqdm(range(start_iter + 1, max_iteration + 1), file=save_stdout, ncols=80):
             training = pinned_training_queue.get(block=True)
-            training_loss = nnet.train(**training)
-
+            training_loss, top_bboxes, orig_boxes = nnet.train(**training)
             if display and iteration % display == 0:
                 print("Process {}: training loss at iteration {}: {}".format(rank, iteration, training_loss.item()))
             del training_loss
@@ -241,7 +240,7 @@ def main(gpu, ngpus_per_node, args):
         print("len of db: {}".format(len(training_dbs[0].db_inds)))
         print("distributed: {}".format(args.distributed))
 
-    train(training_dbs, validation_db, system_config, model, args)
+    train(training_dbs, validation_db, system_config, config["db"], model, args)
 
 if __name__ == "__main__":
     args = parse_args()
