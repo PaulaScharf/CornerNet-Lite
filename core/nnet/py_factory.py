@@ -112,7 +112,7 @@ class NetworkFactory(object):
         with open(result_json, "w") as f:
             json.dump(detections, f)
 
-        cls_ids   = list(range(1, 1 + 1)) # should actually be (1, 1 + categories)
+        cls_ids   = list(range(1, self.db_config["categories"] + 1))
         image_ids = [db.image_ids(paths[0][0])]
         if len(detections) > 0:
             db.evaluate(result_json, cls_ids, image_ids)
