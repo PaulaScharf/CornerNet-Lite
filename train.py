@@ -215,7 +215,7 @@ def main(gpu, ngpus_per_node, args):
 
     model_file  = "core.models.{}".format(args.model)
     model_file  = importlib.import_module(model_file)
-    model       = model_file.model(input_channels=channels)
+    model       = model_file.model(input_channels=channels, categories=config["db"]["categories"])
 
     train_split = system_config.train_split
     val_split   = system_config.val_split
