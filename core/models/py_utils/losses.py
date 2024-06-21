@@ -106,13 +106,13 @@ class CornerNet_Saccade_Loss(nn.Module):
         self.off_loss    = _off_loss
 
     def forward(self, outs, targets):
-        tl_heats = outs[0]
+        tl_heats = outs[0] # corner heatmaps
         br_heats = outs[1]
-        tl_tags  = outs[2]
+        tl_tags  = outs[2] # embeddings
         br_tags  = outs[3]
-        tl_offs  = outs[4]
+        tl_offs  = outs[4] # offsets
         br_offs  = outs[5]
-        atts     = outs[6]
+        atts     = outs[6] # attribute maps
 
         gt_tl_heat  = targets[0]
         gt_br_heat  = targets[1]

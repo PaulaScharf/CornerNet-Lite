@@ -224,7 +224,7 @@ def prepare_images(db, image, locs, flipped=True):
     input_size  = db.configs["input_size"]
     num_patches = locs.shape[0]
 
-    images  = torch.cuda.FloatTensor(num_patches, 3, input_size[0], input_size[1]).fill_(0)
+    images  = torch.cuda.FloatTensor(num_patches, image.shape[0], input_size[0], input_size[1]).fill_(0)
     offsets = np.zeros((num_patches, 2), dtype=np.float32)
     for ind, (y, x, scale) in enumerate(locs[:, :3]):
         crop_height  = int(input_size[0] / scale)
@@ -245,7 +245,7 @@ def cornernet_saccade(db, nnet, result_dir, debug=False, decode_func=batch_decod
     if not os.path.exists(debug_dir):
         os.makedirs(debug_dir)
 
-    if db.split != "trainval2014":
+    if db.split != "trainval2014" and db.split != "train":
         db_inds = db.db_inds[:500] if debug else db.db_inds
     else:
         db_inds = db.db_inds[:100] if debug else db.db_inds[:5000]
@@ -253,39 +253,50 @@ def cornernet_saccade(db, nnet, result_dir, debug=False, decode_func=batch_decod
     num_images = db_inds.size
     categories = db.configs["categories"]
 
+    no_channels = (4 if db.four_channels else 3)
+
     timer = Timer()
     top_bboxes = {}
-    for k_ind in tqdm(range(0, num_images), ncols=80, desc="locating kps"):
+    for k_ind in tqdm(range(0, num_images), ncols=1, desc="locating kps"):
         db_ind = db_inds[k_ind]
 
         image_id   = db.image_ids(db_ind)
         image_path = db.image_path(db_ind)
-        image      = cv2.imread(image_path)
+        images_loaded = []
+        if image_path.endswith('.npy'):
+            image = np.load(image_path)
+            if db.multi_frame > 1:
+                for i in range(int(image.shape[2]/no_channels)):
+                    images_loaded.append(image[:,:,image.shape[2]-no_channels*(i+1):image.shape[2]-no_channels*i])
+        else:
+            images_loaded = [cv2.imread(image_path, cv2.IMREAD_UNCHANGED)]
+            image      = images_loaded[0]
 
         timer.tic()
         top_bboxes[image_id] = cornernet_saccade_inference(db, nnet, image)
         timer.toc()
 
         if debug:
-            image_path = db.image_path(db_ind)
-            image      = cv2.imread(image_path)
             bboxes     = {
                 db.cls2name(j): top_bboxes[image_id][j]
                 for j in range(1, categories + 1)
             }
-            image      = draw_bboxes(image, bboxes)
+            images_loaded[0]      = draw_bboxes(images_loaded[0], bboxes)
             debug_file = os.path.join(debug_dir, "{}.jpg".format(db_ind))
-            cv2.imwrite(debug_file, image)
+            cv2.imwrite(debug_file, images_loaded[0])
     print('average time: {}'.format(timer.average_time))
 
     result_json = os.path.join(result_dir, "results.json")
     detections  = db.convert_to_coco(top_bboxes)
+    print('detections: \n')
+    print(detections)
     with open(result_json, "w") as f:
         json.dump(detections, f)
 
     cls_ids   = list(range(1, categories + 1))
     image_ids = [db.image_ids(ind) for ind in db_inds]
-    db.evaluate(result_json, cls_ids, image_ids)
+    if len(detections) > 0:
+        db.evaluate(result_json, cls_ids, image_ids)
     return 0
 
 def cornernet_saccade_inference(db, nnet, image, decode_func=batch_decode): 
@@ -307,8 +318,8 @@ def cornernet_saccade_inference(db, nnet, image, decode_func=batch_decode):
 
     num_iterations = len(att_thresholds)
 
-    im_mean = torch.cuda.FloatTensor(db.mean).reshape(1, 3, 1, 1)
-    im_std  = torch.cuda.FloatTensor(db.std).reshape(1, 3, 1, 1)
+    im_mean = torch.cuda.FloatTensor(db.mean).reshape(1, image.shape[2], 1, 1)
+    im_std  = torch.cuda.FloatTensor(db.std).reshape(1, image.shape[2], 1, 1)
 
     detections    = []
     height, width = image.shape[0:2]

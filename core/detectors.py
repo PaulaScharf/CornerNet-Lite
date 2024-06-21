@@ -34,7 +34,7 @@ class CornerNet_Squeeze(Base):
         super(CornerNet_Squeeze, self).__init__(coco, cornernet, cornernet_inference, model=model_path)
 
 class CornerNet_Saccade(Base):
-    def __init__(self):
+    def __init__(self, input_channels=3):
         from .test.cornernet_saccade import cornernet_saccade_inference
         from .models.CornerNet_Saccade import model
 
@@ -45,5 +45,5 @@ class CornerNet_Saccade(Base):
         sys_cfg = SystemConfig().update_config(cfg_sys)
         coco    = COCO(cfg_db)
 
-        cornernet = load_nnet(sys_cfg, model())
+        cornernet = load_nnet(sys_cfg, model(input_channels=input_channels))
         super(CornerNet_Saccade, self).__init__(coco, cornernet, cornernet_saccade_inference, model=model_path)

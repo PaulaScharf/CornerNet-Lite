@@ -9,8 +9,8 @@ def normalize_(image, mean, std):
     image -= mean
     image /= std
 
-def lighting_(data_rng, image, alphastd, eigval, eigvec):
-    alpha = data_rng.normal(scale=alphastd, size=(3, ))
+def lighting_(data_rng, image, alphastd, eigval, eigvec, channels=3):
+    alpha = data_rng.normal(scale=alphastd, size=(channels, ))
     image += np.dot(eigvec, eigval * alpha)
 
 def blend_(alpha, image1, image2):
@@ -30,14 +30,15 @@ def contrast_(data_rng, image, gs, gs_mean, var):
     alpha = 1. + data_rng.uniform(low=-var, high=var)
     blend_(alpha, image, gs_mean)
 
-def color_jittering_(data_rng, image):
+def color_jittering_(data_rng, images):
     functions = [brightness_, contrast_, saturation_]
     random.shuffle(functions)
 
-    gs = grayscale(image)
-    gs_mean = gs.mean()
-    for f in functions:
-        f(data_rng, image, gs, gs_mean, 0.4)
+    for i, image in enumerate(images):
+        gs = grayscale(image)
+        gs_mean = gs.mean()
+        for f in functions:
+            f(data_rng, images[i], gs, gs_mean, 0.4)
 
 def gaussian2D(shape, sigma=1):
     m, n = [(ss - 1.) / 2. for ss in shape]
@@ -90,7 +91,7 @@ def _get_border(border, size):
         i *= 2
     return border // i
 
-def random_crop(image, detections, random_scales, view_size, border=64):
+def random_crop(image, detections, random_scales, view_size, channels=3, border=64):
     view_height, view_width   = view_size
     image_height, image_width = image.shape[0:2]
 
@@ -98,7 +99,7 @@ def random_crop(image, detections, random_scales, view_size, border=64):
     height = int(view_height * scale)
     width  = int(view_width  * scale)
 
-    cropped_image = np.zeros((height, width, 3), dtype=image.dtype)
+    cropped_image = np.zeros((height, width, channels), dtype=image.dtype)
 
     w_border = _get_border(border, image_width)
     h_border = _get_border(border, image_height)
@@ -127,7 +128,7 @@ def random_crop(image, detections, random_scales, view_size, border=64):
 
     return cropped_image, cropped_detections
 
-def crop_image(image, center, size, output_size=None):
+def crop_image(image, center, size, channels=3, output_size=None):
     if output_size == None:
         output_size = size
 
@@ -135,7 +136,7 @@ def crop_image(image, center, size, output_size=None):
     height, width       = size
     o_height, o_width   = output_size
     im_height, im_width = image.shape[0:2]
-    cropped_image       = np.zeros((o_height, o_width, 3), dtype=image.dtype)
+    cropped_image       = np.zeros((o_height, o_width, channels), dtype=image.dtype)
 
     x0, x1 = max(0, ctx - width // 2), min(ctx + width // 2, im_width)
     y0, y1 = max(0, cty - height // 2), min(cty + height // 2, im_height)

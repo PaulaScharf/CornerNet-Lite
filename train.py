@@ -28,6 +28,7 @@ torch.backends.cudnn.benchmark = True
 def parse_args():
     parser = argparse.ArgumentParser(description="Training Script")
     parser.add_argument("cfg_file", help="config file", type=str)
+    parser.add_argument("model", help="model", type=str)
     parser.add_argument("--iter", dest="start_iter",
                         help="train at iteration i",
                         default=0, type=int)
@@ -42,6 +43,10 @@ def parse_args():
     parser.add_argument("--dist-url", default=None, type=str,
                         help="url used to set up distributed training")
     parser.add_argument("--dist-backend", default="nccl", type=str)
+    parser.add_argument("--data", default=None, type=str)
+    parser.add_argument('--four-channels', action='store_true', help='accept input images with 4 channels')
+    parser.add_argument('--multi-frame', type=int, default=1, choices=range(1,101), help='how many frames to load at once')
+    parser.add_argument("--snapshot-name", default=None, type=str)
 
     args = parser.parse_args()
     return args
@@ -86,7 +91,7 @@ def terminate_tasks(tasks):
     for task in tasks:
         task.terminate()
 
-def train(training_dbs, validation_db, system_config, model, args):
+def train(training_dbs, validation_db, system_config, db_config, model, args):
     # reading arguments from command
     start_iter  = args.start_iter
     distributed = args.distributed
@@ -105,10 +110,9 @@ def train(training_dbs, validation_db, system_config, model, args):
     val_iter         = system_config.val_iter
     display          = system_config.display
     decay_rate       = system_config.decay_rate
-    stepsize         = system_config.stepsize
 
     print("Process {}: building model...".format(rank))
-    nnet = NetworkFactory(system_config, model, distributed=distributed, gpu=gpu)
+    nnet = NetworkFactory(system_config, db_config, model, distributed=distributed, gpu=gpu)
     if initialize:
         nnet.save_params(0)
         exit(0)
@@ -162,8 +166,7 @@ def train(training_dbs, validation_db, system_config, model, args):
     with stdout_to_tqdm() as save_stdout:
         for iteration in tqdm(range(start_iter + 1, max_iteration + 1), file=save_stdout, ncols=80):
             training = pinned_training_queue.get(block=True)
-            training_loss = nnet.train(**training)
-
+            training_loss, top_bboxes, orig_boxes = nnet.train(**training)
             if display and iteration % display == 0:
                 print("Process {}: training loss at iteration {}: {}".format(rank, iteration, training_loss.item()))
             del training_loss
@@ -204,11 +207,15 @@ def main(gpu, ngpus_per_node, args):
         config = json.load(f)
 
     config["system"]["snapshot_name"] = args.cfg_file
+    if args.snapshot_name is not None:
+        config["system"]["snapshot_name"] = args.snapshot_name
     system_config = SystemConfig().update_config(config["system"])
 
-    model_file  = "core.models.{}".format(args.cfg_file)
+    channels = ((4 if args.four_channels else 3) * args.multi_frame)
+
+    model_file  = "core.models.{}".format(args.model)
     model_file  = importlib.import_module(model_file)
-    model       = model_file.model()
+    model       = model_file.model(input_channels=channels, categories=config["db"]["categories"])
 
     train_split = system_config.train_split
     val_split   = system_config.val_split
@@ -217,6 +224,9 @@ def main(gpu, ngpus_per_node, args):
     dataset = system_config.dataset
     workers = args.workers
     print("Process {}: using {} workers".format(rank, workers))
+    config["db"]["name"] = args.data
+    config["db"]["four_channels"] = args.four_channels
+    config["db"]["multi_frame"] = args.multi_frame
     training_dbs = [datasets[dataset](config["db"], split=train_split, sys_config=system_config) for _ in range(workers)]
     validation_db = datasets[dataset](config["db"], split=val_split, sys_config=system_config)
 
@@ -230,7 +240,7 @@ def main(gpu, ngpus_per_node, args):
         print("len of db: {}".format(len(training_dbs[0].db_inds)))
         print("distributed: {}".format(args.distributed))
 
-    train(training_dbs, validation_db, system_config, model, args)
+    train(training_dbs, validation_db, system_config, config["db"], model, args)
 
 if __name__ == "__main__":
     args = parse_args()

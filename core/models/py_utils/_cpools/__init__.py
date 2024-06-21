@@ -1,9 +1,10 @@
 import torch
-
 from torch import nn
 from torch.autograd import Function
 
-import top_pool, bottom_pool, left_pool, right_pool
+import core.models.py_utils._cpools.src.top_pool as top_pool, core.models.py_utils._cpools.src.bottom_pool as bottom_pool, core.models.py_utils._cpools.src.left_pool as left_pool, core.models.py_utils._cpools.src.right_pool as right_pool
+# import top_pool, bottom_pool, left_pool, right_pool
+
 
 class TopPoolFunction(Function):
     @staticmethod

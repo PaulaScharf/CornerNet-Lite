@@ -16,14 +16,19 @@ torch.backends.cudnn.benchmark = False
 def parse_args():
     parser = argparse.ArgumentParser(description="Evaluation Script")
     parser.add_argument("cfg_file", help="config file", type=str)
+    parser.add_argument("model", help="model", type=str)
     parser.add_argument("--testiter", dest="testiter",
                         help="test at iteration i",
                         default=None, type=int)
+    parser.add_argument("--data", default=None, type=str)
     parser.add_argument("--split", dest="split",
                         help="which split to use",
                         default="validation", type=str)
     parser.add_argument("--suffix", dest="suffix", default=None, type=str)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument('--four-channels', action='store_true', help='accept input images with 4 channels')
+    parser.add_argument('--multi-frame', type=int, default=1, choices=range(1,101), help='how many frames to load at once')
+    parser.add_argument("--snapshot-name", default=None, type=str)
 
     args = parser.parse_args()
     return args
@@ -33,7 +38,7 @@ def make_dirs(directories):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-def test(db, system_config, model, args):
+def test(db, system_config, db_config, model, args):
     split    = args.split
     testiter = args.testiter
     debug    = args.debug
@@ -45,13 +50,14 @@ def test(db, system_config, model, args):
     if suffix is not None:
         result_dir = os.path.join(result_dir, suffix)
 
+    print('saving results to: ' + str(result_dir))
     make_dirs([result_dir])
 
     test_iter = system_config.max_iter if testiter is None else testiter
     print("loading parameters at iteration: {}".format(test_iter))
 
     print("building neural network...")
-    nnet = NetworkFactory(system_config, model)
+    nnet = NetworkFactory(system_config, db_config, model)
     print("loading parameters...")
     nnet.load_params(test_iter)
 
@@ -70,11 +76,19 @@ def main(args):
         config = json.load(f)
             
     config["system"]["snapshot_name"] = args.cfg_file
+    if args.snapshot_name is not None:
+        config["system"]["snapshot_name"] = args.snapshot_name
     system_config = SystemConfig().update_config(config["system"])
 
-    model_file  = "core.models.{}".format(args.cfg_file)
+    config["db"]["name"] = args.data
+    config["db"]["four_channels"] = args.four_channels
+    config["db"]["multi_frame"] = args.multi_frame
+    channels = ((4 if args.four_channels else 3) * args.multi_frame)
+
+    model_file  = "core.models.{}".format(args.model)
     model_file  = importlib.import_module(model_file)
-    model       = model_file.model()
+    model       = model_file.model(input_channels=channels)
+    print('loading model file: ' + str(model_file))
 
     train_split = system_config.train_split
     val_split   = system_config.val_split
@@ -97,7 +111,7 @@ def main(args):
     print("db config...")
     pprint.pprint(testing_db.configs)
 
-    test(testing_db, system_config, model, args)
+    test(testing_db, system_config, config["db"], model, args)
 
 if __name__ == "__main__":
     args = parse_args()

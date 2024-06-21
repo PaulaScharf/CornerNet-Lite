@@ -30,14 +30,14 @@ def clip_detections(border, detections):
     keep_inds = np.where(keep_inds)[0]
     return detections[keep_inds], keep_inds
 
-def crop_image_dets(image, dets, ind, input_size, output_size=None, random_crop=True, rand_center=True):
+def crop_image_dets(images, dets, ind, input_size, channels=3, output_size=None, random_crop=True, rand_center=True):
     if ind is not None:
         det_x0, det_y0, det_x1, det_y1 = dets[ind, 0:4]
     else: 
         det_x0, det_y0, det_x1, det_y1 = None, None, None, None
 
     input_height, input_width = input_size
-    image_height, image_width = image.shape[0:2]
+    image_height, image_width = images[0].shape[0:2]
 
     centered = rand_center and np.random.uniform() > 0.5
     if not random_crop or image_width <= input_width:
@@ -64,10 +64,11 @@ def crop_image_dets(image, dets, ind, input_size, output_size=None, random_crop=
         ymax  = min((det_y0 + det_y1) // 2 + np.random.randint(0, 15), image_height - 1)
         yc    = np.random.randint(int(ymin), int(ymax) + 1)
 
-    image, border, offset = crop_image(image, [yc, xc], input_size, output_size=output_size)
+    for i, image in enumerate(images):
+        images[i], border, offset = crop_image(image, [yc, xc], input_size, channels=channels, output_size=output_size)
     dets[:, 0:4:2] -= offset[1]
     dets[:, 1:4:2] -= offset[0]
-    return image, dets, border
+    return images, dets, border
 
 def scale_image_detections(image, dets, scale):
     height, width = image.shape[0:2]
@@ -136,7 +137,9 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
     max_scale   = db.configs["max_scale"]
     max_objects = 128
 
-    images     = np.zeros((batch_size, 3, input_size[0], input_size[1]), dtype=np.float32)
+    no_channels = (4 if db.four_channels else 3)
+
+    images     = np.zeros((batch_size, no_channels * db.multi_frame, input_size[0], input_size[1]), dtype=np.float32)
     tl_heats   = np.zeros((batch_size, categories, output_size[0], output_size[1]), dtype=np.float32)
     br_heats   = np.zeros((batch_size, categories, output_size[0], output_size[1]), dtype=np.float32)
     tl_valids  = np.zeros((batch_size, categories, output_size[0], output_size[1]), dtype=np.float32)
@@ -159,14 +162,21 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
         k_ind  = (k_ind + 1) % db_size
 
         image_path = db.image_path(db_ind)
-        image      = cv2.imread(image_path)
+        images_loaded = []
+        if image_path.endswith('.npy'):
+            image = np.load(image_path)
+            if db.multi_frame > 1:
+                for i in range(int(image.shape[2]/no_channels)):
+                    images_loaded.append(image[:,:,image.shape[2]-no_channels*(i+1):image.shape[2]-no_channels*i])
+        else:
+            images_loaded = [cv2.imread(image_path, cv2.IMREAD_UNCHANGED)]
 
         orig_detections = db.detections(db_ind)
         keep_inds       = np.arange(orig_detections.shape[0])
 
         # clip the detections
         detections = orig_detections.copy()
-        border     = [0, image.shape[0], 0, image.shape[1]]
+        border     = [0, images_loaded[0].shape[0], 0, images_loaded[0].shape[1]]
         detections, clip_inds = clip_detections(border, detections)
         keep_inds  = keep_inds[clip_inds]
 
@@ -176,10 +186,11 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
         orig_detections[:, 0:4:2] *= scale
         orig_detections[:, 1:4:2] *= scale
         
-        image, detections = scale_image_detections(image, detections, scale)
+        for i,image in enumerate(images_loaded):
+            images_loaded[i], detections = scale_image_detections(image, detections, scale)
         ref_detection     = detections[ref_ind].copy()
 
-        image, detections, border = crop_image_dets(image, detections, ref_ind, input_size, rand_center=rand_center)
+        images_loaded, detections, border = crop_image_dets(images_loaded, detections, ref_ind, input_size, channels=no_channels, rand_center=rand_center)
 
         detections, clip_inds = clip_detections(border, detections)
         keep_inds = keep_inds[clip_inds]
@@ -189,28 +200,40 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
 
         # flipping an image randomly
         if not debug and np.random.uniform() > 0.5:
-            image[:] = image[:, ::-1, :]
-            width    = image.shape[1]
+            for i,image in enumerate(images_loaded):
+                images_loaded[i][:] = image[:, ::-1, :]
+            width    = images_loaded[0].shape[1]
             detections[:, [0, 2]] = width - detections[:, [2, 0]] - 1
         create_attention_mask([att[b_ind, 0] for att in attentions], att_ratios, att_ranges, detections)
 
         if debug:
-            dimage = image.copy()
-            for det in detections.astype(np.int32):
-                cv2.rectangle(dimage,
-                    (det[0], det[1]),
-                    (det[2], det[3]),
-                    (0, 255, 0), 2
-                )
-            cv2.imwrite('debug/{:03d}.jpg'.format(b_ind), dimage)
+            for i,image in enumerate(images_loaded):
+                dimage = image.copy()
+                for det in detections.astype(np.int32):
+                    cv2.rectangle(dimage,
+                        (det[0], det[1]),
+                        (det[2], det[3]),
+                        (0, 255, 0), 2
+                    )
+                cv2.imwrite('debug/{:03d}-{:03d}.jpg'.format(b_ind,i), dimage)
         overlaps = bbox_overlaps(detections, orig_detections[keep_inds]) > 0.5
 
         if not debug:
-            image = image.astype(np.float32) / 255.
-            color_jittering_(data_rng, image)
-            lighting_(data_rng, image, 0.1, db.eig_val, db.eig_vec)
-            normalize_(image, db.mean, db.std)
-        images[b_ind] = image.transpose((2, 0, 1))
+            for i,image in enumerate(images_loaded):
+                images_loaded[i] = image.astype(np.float32) / 255.
+            color_jittering_(data_rng, images_loaded)
+            for i,image in enumerate(images_loaded):
+                lighting_(data_rng, images_loaded[i], 0.1, db.eig_val, db.eig_vec, channels=no_channels)
+                normalize_(images_loaded[i], db.mean, db.std)
+            
+        final_image = []
+        for i, image in enumerate(images_loaded):
+            images_loaded[i] = image.transpose((2, 0, 1))
+            if final_image == []:
+                final_image = images_loaded[i]
+            else:
+                final_image = np.append(final_image, images_loaded[i], axis=0)
+        images[b_ind] = final_image
 
         for ind, (detection, overlap) in enumerate(zip(detections, overlaps)):
             category = int(detection[-1]) - 1
@@ -268,6 +291,7 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
         tag_masks[b_ind, :tag_len] = 1
 
     images     = torch.from_numpy(images)
+    detections = torch.from_numpy(detections)
     tl_heats   = torch.from_numpy(tl_heats)
     br_heats   = torch.from_numpy(br_heats)
     tl_regrs   = torch.from_numpy(tl_regrs)
@@ -281,5 +305,7 @@ def cornernet_saccade(system_configs, db, k_ind, data_aug, debug):
 
     return {
         "xs": [images],
-        "ys": [tl_heats, br_heats, tag_masks, tl_regrs, br_regrs, tl_tags, br_tags, tl_valids, br_valids, attentions]
+        "ys": [tl_heats, br_heats, tag_masks, tl_regrs, br_regrs, tl_tags, br_tags, tl_valids, br_valids, attentions],
+        "orig": [detections],
+        "paths": [db.db_inds[:]]
     }, k_ind

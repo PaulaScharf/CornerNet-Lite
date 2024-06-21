@@ -1,3 +1,4 @@
+import json
 import os
 import torch
 import pickle
@@ -5,6 +6,7 @@ import importlib
 import torch.nn as nn
 
 from ..models.py_utils.data_parallel import DataParallel
+from core.dbs import datasets
 
 torch.manual_seed(317)
 
@@ -31,10 +33,11 @@ class DummyModule(nn.Module):
         return self.module(*xs, **kwargs)
 
 class NetworkFactory(object):
-    def __init__(self, system_config, model, distributed=False, gpu=None):
+    def __init__(self, system_config, db_config, model, distributed=False, gpu=None):
         super(NetworkFactory, self).__init__()
 
         self.system_config = system_config
+        self.db_config = db_config
 
         self.gpu     = gpu
         self.model   = DummyModule(model)
@@ -85,7 +88,8 @@ class NetworkFactory(object):
             return [x.cuda(self.gpu, non_blocking=True) for x in xs]
         return xs.cuda(self.gpu, non_blocking=True)
 
-    def train(self, xs, ys, **kwargs):
+    def train(self, xs, ys, orig, paths, **kwargs):
+        from ..test.cornernet_saccade import cornernet_saccade_inference
         xs = [self._t_cuda(x) for x in xs]
         ys = [self._t_cuda(y) for y in ys]
 
@@ -95,7 +99,26 @@ class NetworkFactory(object):
         loss.backward()
         self.optimizer.step()
 
-        return loss
+        top_bboxes = {}
+        db = datasets['CUSTOM'](self.db_config, split="train", sys_config=self.system_config)
+        images = xs[0]
+        for i, image in enumerate(images):
+            top_bboxes[db.image_ids(paths[0][i])]  = cornernet_saccade_inference(db, self, torch.transpose(image,2,0).cpu().numpy())
+            top_bboxes[db.image_ids(paths[0][i])][1] = db.detections(paths[0][i])
+        detections  = db.convert_to_coco(top_bboxes)
+        result_json = "./results.json"
+        print('detections: \n')
+        print(len(detections))
+        with open(result_json, "w") as f:
+            json.dump(detections, f)
+
+        cls_ids   = list(range(1, self.db_config["categories"] + 1))
+        image_ids = [db.image_ids(paths[0][0])]
+        if len(detections) > 0:
+            db.evaluate(result_json, cls_ids, image_ids)
+
+
+        return loss, top_bboxes, orig
 
     def validate(self, xs, ys, **kwargs):
         with torch.no_grad():

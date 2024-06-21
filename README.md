@@ -1,3 +1,18 @@
+# Custom CornerNet-Lite
+
+This is a customization of the official CornerNet-Lite implementation. The original Readme starts [here](https://github.com/PaulaScharf/CornerNet-Lite-custom/edit/master/README.md#cornernet-lite-training-evaluation-and-testing-code). The customisations are:
+
+- translating the four corner pooling layers to python
+- custom dataloader to enable input data in the yolo format
+- support for stacked images
+- support for images with 4 channels
+
+Check out [this pull request](https://github.com/PaulaScharf/CornerNet-Lite-custom/pull/1) to see all the changes.
+
+## custom dataloader
+
+Main code in this script `core/dbs/custom.py` and `yolo_to_coco.py`. I am really not sure about mean, std and eigen values here...
+
 # CornerNet-Lite: Training, Evaluation and Testing Code
 Code for reproducing results in the following paper:
 

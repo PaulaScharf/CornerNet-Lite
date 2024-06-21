@@ -1,11 +1,11 @@
 {
     "system": {
-        "dataset": "COCO",
+        "dataset": "CUSTOM",
         "batch_size": 48,
         "sampling_function": "cornernet_saccade",
 
-        "train_split": "trainval",
-        "val_split": "minival",
+        "train_split": "train",
+        "val_split": "val",
 
         "learning_rate": 0.00025,
         "decay_rate": 10,
@@ -18,37 +18,39 @@
         "max_iter": 500000,
         "stepsize": 450000,
         "snapshot": 5000,
-        "snapshot_name": "originals",
 
         "chunk_sizes": [48]
     },
-
+    
     "db": {
-        "rand_scale_min": 0.5,
-        "rand_scale_max": 1.1,
+        "rand_scale_min": 1.0, 
+        "rand_scale_max": 1.01,
         "rand_scale_step": 0.1,
         "rand_scales": null,
+        "rand_crop": true,
 
-        "rand_full_crop": true,
+        "rand_full_crop": false,
         "gaussian_bump": true,
         "gaussian_iou": 0.5,
 
-        "min_scale": 16,
+        "min_scale": 6,
         "view_sizes": [],
 
         "height_mult": 31,
         "width_mult": 31,
 
-        "input_size": [255,255],
-        "output_sizes": [[64, 64]],
+        "input_size": [765,765],
+        "output_sizes": [[128, 128]],
 
         "att_max_crops": 30,
         "att_scales": [[1, 2, 4]],
         "att_thresholds": [0.3],
+        "att_sizes": [[48, 48], [96, 96], [192, 192]],
+        "att_ranges": [[288, 766], [128, 288], [0, 128]],
 
         "top_k": 12,
         "num_dets": 12,
-        "categories": 80,
+        "categories": 1,
         "ae_threshold": 0.3,
         "nms_threshold": 0.5,
 
